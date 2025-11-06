@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project 45: Goal Dashboard</title>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=Orbitron:wght@400;700&display=swap');
+
+        :root {
+            /* --- NEW: Day Mode Color Scheme --- */
+            --bg-color: #f4f7fa; /* Light grey background */
+            --card-bg: #ffffff; /* Clean white cards */
+            --primary-color: #4a69ff; /* Strong blue */
+            --secondary-color: #7b2cbf; /* Deep purple */
+            --text-color: #212529; /* Dark text */
+            --text-muted: #6c757d; /* Muted grey text */
+            --border-color: #dee2e6;
+            --font-display: 'Orbitron', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Basic setup */
+        body {
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-body);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        #root {
+            width: 100%;
+            max-width: 900px;
+            margin: 20px auto;
+        }
+
+        /* Main application container */
+        .app-container {
+            background: transparent; /* No main container bg */
+            border-radius: 15px;
+            padding: 0;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- NEW: Section Card Layout --- */
+        .section-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            margin-bottom: 25px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .section-header h2 {
+            margin: 0;
+            font-family: var(--font-display);
+            color: var(--primary-color);
+        }
+
+        /* Header & Countdown */
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            margin: 0;
+            color: var(--text-color);
+        }
+
+        .countdown-timer {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .timer-unit {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            background: var(--bg-color);
+            padding: 10px;
+            border-radius: 8px;
+            min-width: 50px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .timer-unit span {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-family: var(--font-body);
+            margin-top: 5px;
+        }
+
+        /* API Key Input */
+        .api-key-form {
+            display: flex;
+            gap: 10px;
+            background: var(--bg-color);
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .api-key-input {
+            flex-grow: 1;
+            padding: 10px;
+            font-size: 0.9rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 5px;
+        }
+        .api-key-input::placeholder { color: var(--text-muted); }
+        .api-key-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(74, 105, 255, 0.2);
+        }
+
+
+        /* --- NEW: Task Input Base Styles --- */
+        .task-input-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .task-input {
+            flex-grow: 1;
+            padding: 12px;
+            font-size: 1rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 5px;
+        }
+        .task-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(74, 105, 255, 0.2);
+        }
+        .add-task-btn {
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .add-task-btn:hover {
+            background: #3a58e0;
+        }
+
+        /* AI Task Form */
+        .ai-task-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 8px;
+            background: linear-gradient(145deg, #f0f3ff, #e6e9ff);
+            border: 1px solid var(--primary-color);
+        }
+        .ai-task-input { background: var(--card-bg); }
+        .ai-breakdown-btn {
+            background: var(--secondary-color);
+            color: white;
+        }
+        .ai-breakdown-btn:hover { background: #6a25a8; }
+        
+        /* --- NEW: Category Select --- */
+        .category-select {
+            padding: 12px;
+            font-size: 1rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        .category-select:focus {
+             outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(74, 105, 255, 0.2);
+        }
+
+        /* Loading/Error/Disabled Styles */
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .loading-message {
+            text-align: center;
+            color: var(--primary-color);
+            font-family: var(--font-body);
+            margin: 15px 0;
+        }
+        .error-message {
+            color: #d90429;
+            background: #ffeaef;
+            border: 1px solid #d90429;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .empty-list-message {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 20px 0;
+        }
+
+        /* --- NEW: Goal Tabs --- */
+        .goal-tabs {
+            display: flex;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            border-bottom: 3px solid transparent;
+            transform: translateY(2px);
+        }
+        .tab-btn.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        .tab-btn:focus { outline: none; }
+
+        /* Task List */
+        .task-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .task-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-color);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 5px solid var(--primary-color);
+            transition: all 0.3s ease;
+        }
+        
+        .task-item[data-status="In Progress"] { border-left-color: #ffb703; }
+        .task-item[data-status="Completed"] {
+            border-left-color: #2a9d8f;
+            opacity: 0.7;
+        }
+        .task-item[data-status="Completed"] .task-text {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+        
+        .task-text {
+            flex-grow: 1;
+            margin-right: 15px;
+            word-break: break-word;
+        }
+        
+        /* --- NEW: Edit Task Input --- */
+        .edit-task-input {
+            flex-grow: 1;
+            margin-right: 15px;
+            padding: 8px;
+            font-size: 1rem;
+            border: 1px solid var(--primary-color);
+            border-radius: 5px;
+        }
+        .edit-task-input:focus { outline: none; }
+
+        .task-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .status-select {
+            padding: 8px;
+            background: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+        }
+        
+        /* --- NEW: Task Button Styles --- */
+        .task-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 5px;
+        }
+        .task-btn.delete-btn:hover { color: #d90429; }
+        .task-btn.edit-btn:hover { color: var(--primary-color); }
+        .task-btn.save-btn:hover { color: #2a9d8f; }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .section-card { padding: 15px; }
+            .header h1 { font-size: 1.8rem; }
+            .countdown-timer { gap: 5px; }
+            .timer-unit { font-size: 1.1rem; min-width: 40px; padding: 8px; }
+            .api-key-form, .task-input-form, .ai-task-form { flex-direction: column; }
+            .category-select { margin-right: 0; margin-bottom: 10px; }
+            .task-item { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .task-controls { width: 100%; justify-content: flex-end; }
+            .edit-task-input { width: calc(100% - 20px); }
+            .goal-tabs { flex-wrap: wrap; }
+            .tab-btn { font-size: 0.9rem; padding: 8px 12px; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="root"></div>
+
+    <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+
+        const { useState, useEffect, useMemo, useCallback } = React;
+
+        // --- Custom Hook for localStorage ---
+        function useLocalStorage(key, initialValue) {
+            const [storedValue, setStoredValue] = useState(() => {
+                try {
+                    const item = window.localStorage.getItem(key);
+                    return item ? JSON.parse(item) : initialValue;
+                } catch (error) {
+                    console.error(error);
+                    return initialValue;
+                }
+            });
+
+            const setValue = (value) => {
+                try {
+                    const valueToStore = value instanceof Function ? value(storedValue) : value;
+                    setStoredValue(valueToStore);
+                    window.localStorage.setItem(key, JSON.stringify(valueToStore));
+                } catch (error) {
+                    console.error(error);
+                }
+            };
+            return [storedValue, setValue];
+        }
+
+        // --- Custom Hook for Countdown Timer ---
+        function useCountdown(targetDate) {
+            const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+
+            function calculateTimeLeft() {
+                const difference = +new Date(targetDate) - +new Date();
+                let timeLeft = {};
+
+                if (difference > 0) {
+                    timeLeft = {
+                        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+                        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+                        minutes: Math.floor((difference / 1000 / 60) % 60),
+                        seconds: Math.floor((difference / 1000) % 60)
+                    };
+                } else {
+                    timeLeft = { days: 0, hours: 0, minutes: 0, seconds: 0 };
+                }
+                return timeLeft;
+            }
+
+            useEffect(() => {
+                const timer = setInterval(() => {
+                    setTimeLeft(calculateTimeLeft());
+                }, 1000);
+                return () => clearInterval(timer);
+            }, [targetDate]);
+
+            return timeLeft;
+        }
+
+        // --- Task Component (Now handles Daily AND Goal tasks, with EDIT mode) ---
+        const Task = React.memo(({ task, onStatusChange, onDelete, onEdit }) => {
+            const [isEditing, setIsEditing] = useState(false);
+            const [editText, setEditText] = useState(task.text);
+
+            const handleSave = () => {
+                if (editText.trim() === '') return;
+                onEdit(task.id, editText);
+                setIsEditing(false);
+            };
+
+            const handleKeyDown = (e) => {
+                if (e.key === 'Enter') {
+                    handleSave();
+                } else if (e.key === 'Escape') {
+                    setIsEditing(false);
+                    setEditText(task.text);
+                }
+            };
+
+            return (
+                <li className="task-item" data-status={task.status}>
+                    {isEditing ? (
+                        <input
+                            type="text"
+                            className="edit-task-input"
+                            value={editText}
+                            onChange={(e) => setEditText(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            autoFocus
+                        />
+                    ) : (
+                        <span className="task-text">{task.text}</span>
+                    )}
+                    
+                    <div className="task-controls">
+                        <select
+                            className="status-select"
+                            value={task.status}
+                            onChange={(e) => onStatusChange(task.id, e.target.value)}
+                            disabled={isEditing}
+                        >
+                            <option value="Not Started">Not Started</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                        
+                        {isEditing ? (
+                            <button className="task-btn save-btn" onClick={handleSave} title="Save">
+                                &#10004; {/* Checkmark */}
+                            </button>
+                        ) : (
+                            <button className="task-btn edit-btn" onClick={() => setIsEditing(true)} title="Edit">
+                                &#9998; {/* Pencil */}
+                            </button>
+                        )}
+                        
+                        <button className="task-btn delete-btn" onClick={() => onDelete(task.id)} title="Delete task">
+                            &times; 
+                        </button>
+                    </div>
+                </li>
+            );
+        });
+        
+        // --- Task List Component (DRY) ---
+        const TaskList = ({ tasks, onStatusChange, onDelete, onEdit }) => {
+            if (tasks.length === 0) {
+                return <p className="empty-list-message">No tasks here yet.</p>;
+            }
+            return (
+                <ul className="task-list">
+                    {tasks.map(task => (
+                        <Task
+                            key={task.id}
+                            task={task}
+                            onStatusChange={onStatusChange}
+                            onDelete={onDelete}
+                            onEdit={onEdit}
+                        />
+                    ))}
+                </ul>
+            );
+        };
+
+
+        // --- Main App Component ---
+        function App() {
+            // --- Countdown Timer ---
+            const targetDate = '2025-12-23T00:00:00';
+            const timeLeft = useCountdown(targetDate);
+            const age = 22;
+
+            // --- State ---
+            const [apiKey, setApiKey] = useLocalStorage('gemini_api_key', '');
+            const [isLoading, setIsLoading] = useState(false);
+            const [errorMessage, setErrorMessage] = useState('');
+            
+            // --- NEW: Daily Task State ---
+            const [dailyData, setDailyData] = useLocalStorage('project45_daily', { tasks: [], date: null });
+            const [dailyTaskInput, setDailyTaskInput] = useState('');
+
+            // --- NEW: Categorized Goal State ---
+            const defaultGoals = {
+                'Career': [{ id: 1, text: 'Define key ambitions for the year', status: 'Not Started' }],
+                'Social': [{ id: 2, text: 'Outline 3 social impact actions', status: 'Not Started' }],
+                'Political': [{ id: 3, text: 'Read one book on political theory', status: 'Not Started' }],
+                'Personal': []
+            };
+            const [goals, setGoals] = useLocalStorage('project45_goals', defaultGoals);
+            const [goalTaskInput, setGoalTaskInput] = useState('');
+            const [aiTaskInput, setAiTaskInput] = useState('');
+            const [selectedCategory, setSelectedCategory] = useState('Career');
+            const [aiCategory, setAiCategory] = useState('Career');
+
+            // --- Effect to clear daily tasks ---
+            useEffect(() => {
+                const today = new Date().toLocaleDateString();
+                if (dailyData.date !== today) {
+                    setDailyData({ tasks: [], date: today });
+                }
+            }, []); // Runs only on app load
+
+            // --- CRUD Handlers for Daily Tasks ---
+            const handleAddDailyTask = (e) => {
+                e.preventDefault();
+                if (dailyTaskInput.trim() === '') return;
+                const newTask = { id: Date.now(), text: dailyTaskInput, status: 'Not Started' };
+                setDailyData(prev => ({ ...prev, tasks: [...prev.tasks, newTask] }));
+                setDailyTaskInput('');
+            };
+
+            const handleDeleteDailyTask = (id) => {
+                setDailyData(prev => ({ ...prev, tasks: prev.tasks.filter(t => t.id !== id) }));
+            };
+
+            const handleStatusChangeDailyTask = (id, newStatus) => {
+                setDailyData(prev => ({
+                    ...prev,
+                    tasks: prev.tasks.map(t => t.id === id ? { ...t, status: newStatus } : t)
+                }));
+            };
+            
+            const handleEditDailyTask = (id, newText) => {
+                 setDailyData(prev => ({
+                    ...prev,
+                    tasks: prev.tasks.map(t => t.id === id ? { ...t, text: newText } : t)
+                }));
+            };
+
+            // --- CRUD Handlers for Categorized Goals ---
+            const handleAddGoal = (e) => {
+                e.preventDefault();
+                if (goalTaskInput.trim() === '') return;
+                const newTask = { id: Date.now(), text: goalTaskInput, status: 'Not Started' };
+                setGoals(prevGoals => ({
+                    ...prevGoals,
+                    [selectedCategory]: [...prevGoals[selectedCategory], newTask]
+                }));
+                setGoalTaskInput('');
+            };
+
+            const handleDeleteGoal = (id) => {
+                setGoals(prevGoals => ({
+                    ...prevGoals,
+                    [selectedCategory]: prevGoals[selectedCategory].filter(t => t.id !== id)
+                }));
+            };
+
+            const handleStatusChangeGoal = (id, newStatus) => {
+                setGoals(prevGoals => ({
+                    ...prevGoals,
+                    [selectedCategory]: prevGoals[selectedCategory].map(t => t.id === id ? { ...t, status: newStatus } : t)
+                }));
+            };
+            
+            const handleEditGoal = (id, newText) => {
+                setGoals(prevGoals => ({
+                    ...prevGoals,
+                    [selectedCategory]: prevGoals[selectedCategory].map(t => t.id === id ? { ...t, text: newText } : t)
+                }));
+            };
+            
+            // --- Gemini API Call Function ---
+            const handleAiBreakdown = async (e) => {
+                e.preventDefault();
+                if (!aiTaskInput.trim() || !apiKey) {
+                    setErrorMessage('Please enter your API Key and a goal to break down.');
+                    return;
+                }
+                setIsLoading(true);
+                setErrorMessage('');
+
+                const systemPrompt = `You are an expert productivity coach. The user will give you a large, ambitious goal for their "${aiCategory}" category.
+Your job is to break it down into 5-7 smaller, concrete, and actionable sub-tasks.
+The user is located in Sitamarhi, Bihar, India, so make suggestions relevant if location is needed (e.g., for social/political goals).
+The user's birthday is 2025-12-23. The current date is ${new Date().toLocaleDateString()}. Keep this timeline in mind.
+Return ONLY the sub-tasks in a JSON format.
+Example request: "Learn Data Analysis"
+Example response: 
+{
+  "tasks": [
+    "Master Python basics (variables, loops, functions)",
+    "Learn data manipulation with Pandas (DataFrames, filtering, grouping)",
+    "Practice data visualization with Matplotlib and Seaborn",
+    "Complete 2-3 guided data analysis projects (e.g., Titanic dataset)",
+    "Start a personal project with a local dataset (e.g., Sitamarhi census data)"
+  ]
+}`;
+                const payload = {
+                    contents: [{ parts: [{ text: aiTaskInput }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: { "tasks": { "type": "ARRAY", "items": { "type": "STRING" } } }
+                        }
+                    }
+                };
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error?.message || `HTTP error! status: ${response.status}`);
+                    }
+                    const result = await response.json();
+                    if (!result.candidates || !result.candidates[0].content?.parts?.[0]?.text) {
+                         throw new Error("Invalid response structure from API.");
+                    }
+                    const jsonText = result.candidates[0].content.parts[0].text;
+                    const parsedJson = JSON.parse(jsonText);
+                    const generatedTasks = parsedJson.tasks || [];
+
+                    const newTasks = generatedTasks.map((text, index) => ({
+                        id: Date.now() + index,
+                        text: text,
+                        status: 'Not Started'
+                    }));
+
+                    setGoals(prevGoals => ({
+                        ...prevGoals,
+                        [aiCategory]: [...prevGoals[aiCategory], ...newTasks]
+                    }));
+                    setAiTaskInput('');
+                    setSelectedCategory(aiCategory); // Switch tab to show new tasks
+
+                } catch (error) {
+                    console.error("Gemini API call failed:", error);
+                    setErrorMessage(`Failed to get tasks. ${error.message}.`);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            const formatTime = (time) => String(time).padStart(2, '0');
+            const goalCategories = Object.keys(goals);
+
+            return (
+                <div className="app-container">
+                    {/* --- HEADER & COUNTDOWN --- */}
+                    <div className="header section-card">
+                        <h1>Project 45: Countdown to {age}</h1>
+                        <div className="countdown-timer">
+                            <div className="timer-unit">{timeLeft.days}<span>Days</span></div>
+                            <div className="timer-unit">{formatTime(timeLeft.hours)}<span>Hours</span></div>
+                            <div className="timer-unit">{formatTime(timeLeft.minutes)}<span>Minutes</span></div>
+                            <div className="timer-unit">{formatTime(timeLeft.seconds)}<span>Seconds</span></div>
+                        </div>
+                    </div>
+                    
+                    {/* --- API KEY --- */}
+                    <div className="section-card">
+                         <div className="api-key-form">
+                             <input
+                                type="password"
+                                className="api-key-input"
+                                placeholder="Enter your Gemini API Key..."
+                                value={apiKey}
+                                onChange={(e) => {
+                                    setApiKey(e.target.value);
+                                    if (errorMessage) setErrorMessage('');
+                                }}
+                            />
+                        </div>
+                    </div>
+                    
+                    {errorMessage && <div className="error-message">{errorMessage}</div>}
+
+                    {/* --- TODAY'S TASKS --- */}
+                    <div className="section-card">
+                        <div className="section-header">
+                            <h2>Today's Tasks</h2>
+                            <span>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
+                        </div>
+                        <form className="task-input-form" onSubmit={handleAddDailyTask}>
+                            <input
+                                type="text"
+                                className="task-input"
+                                placeholder="Add a quick task for today..."
+                                value={dailyTaskInput}
+                                onChange={(e) => setDailyTaskInput(e.target.value)}
+                                disabled={isLoading}
+                            />
+                            <button type="submit" className="add-task-btn" disabled={isLoading}>Add</button>
+                        </form>
+                        <TaskList 
+                            tasks={dailyData.tasks}
+                            onStatusChange={handleStatusChangeDailyTask}
+                            onDelete={handleDeleteDailyTask}
+                            onEdit={handleEditDailyTask}
+                        />
+                    </div>
+
+                    {/* --- LONG-TERM GOALS --- */}
+                    <div className="section-card">
+                        <div className="section-header">
+                             <h2>Long-Term Goals</h2>
+                        </div>
+                        
+                        {/* --- AI BREAKDOWN --- */}
+                        <form className="ai-task-form" onSubmit={handleAiBreakdown}>
+                            <select
+                                className="category-select"
+                                value={aiCategory}
+                                onChange={(e) => setAiCategory(e.target.value)}
+                                disabled={isLoading}
+                            >
+                                {goalCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                            </select>
+                            <input
+                                type="text"
+                                className="ai-task-input"
+                                placeholder="Break down a big goal..."
+                                value={aiTaskInput}
+                                onChange={(e) => setAiTaskInput(e.target.value)}
+                                disabled={isLoading}
+                            />
+                            <button type="submit" className="ai-breakdown-btn" disabled={isLoading}>
+                                ✨
+                            </button>
+                        </form>
+                        {isLoading && <div className="loading-message">✨ AI is thinking...</div>}
+                        
+                        <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '25px 0' }} />
+
+                        {/* --- MANUAL GOAL ADD --- */}
+                         <form className="task-input-form" onSubmit={handleAddGoal}>
+                             <select
+                                className="category-select"
+                                value={selectedCategory}
+                                onChange={(e) => setSelectedCategory(e.target.value)}
+                                disabled={isLoading}
+                            >
+                                {goalCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                            </select>
+                            <input
+                                type="text"
+                                className="task-input"
+                                placeholder="Add a new long-term goal..."
+                                value={goalTaskInput}
+                                onChange={(e) => setGoalTaskInput(e.target.value)}
+                                disabled={isLoading}
+                            />
+                            <button type="submit" className="add-task-btn" disabled={isLoading}>Add Goal</button>
+                        </form>
+                        
+                        {/* --- GOAL TABS & LIST --- */}
+                        <div className="goal-tabs">
+                            {goalCategories.map(cat => (
+                                <button 
+                                    key={cat} 
+                                    className={`tab-btn ${selectedCategory === cat ? 'active' : ''}`}
+                                    onClick={() => setSelectedCategory(cat)}
+                                >
+                                    {cat} ({goals[cat].length})
+                                </button>
+                            ))}
+                        </div>
+                        
+                        <TaskList 
+                            tasks={goals[selectedCategory]}
+                            onStatusChange={handleStatusChangeGoal}
+                            onDelete={handleDeleteGoal}
+                            onEdit={handleEditGoal}
+                        />
+                    </div>
+
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+
+    </script>
+
+</body>
+</html>                                            make this page very very enhanced, attractive & best in each & every aspect. don't remove any existing functionality...you can add
