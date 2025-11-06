@@ -430,6 +430,7 @@
                 transparent
             );
             animation: shimmer 3s infinite;
+            will-change: transform;
         }
 
         @keyframes shimmer {
@@ -799,6 +800,7 @@
             height: 200%;
             background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
             animation: rotate 10s linear infinite;
+            will-change: transform;
         }
 
         @keyframes rotate {
@@ -878,6 +880,7 @@
                 transparent
             );
             animation: shimmer 2s infinite;
+            will-change: transform;
         }
 
         /* Motivational Quote */
@@ -1116,6 +1119,12 @@
 
         ::-webkit-scrollbar-thumb:hover {
             background: linear-gradient(180deg, var(--primary-hover), var(--secondary-hover));
+        }
+
+        /* Firefox scrollbar styling */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-color) var(--bg-alt);
         }
 
         /* Selection Styling */
@@ -1384,7 +1393,7 @@
             useEffect(() => {
                 const interval = setInterval(() => {
                     setCurrentQuote(quotes[Math.floor(Math.random() * quotes.length)]);
-                }, 60000); // Change every minute for demo, change to daily in production
+                }, 86400000); // Change every 24 hours (daily)
                 return () => clearInterval(interval);
             }, []);
 
